@@ -8,8 +8,8 @@
   --text: #e8ecf0;
   --text2: #8a939f;
   --text3: #5a6370;
-  --accent: #00d4ff;
-  --accent2: #0099bb;
+  --accent: #cc2200;
+  --accent2: #991800;
   --green: #00e676;
   --yellow: #ffd740;
   --orange: #ff9100;
@@ -687,4 +687,34 @@ input, button, select, textarea {
   .registro-form { flex-direction: column; }
   .form-body { padding: 20px; }
   .header-inner { flex-direction: column; gap: 10px; }
+}
+
+/* ── SELECT MODELO ─────────────────────────────────────────────────────────── */
+.select-modelo {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23cc2200' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.select-modelo:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(204,34,0,0.15);
+}
+
+.select-modelo option {
+  background: var(--bg3);
+  color: var(--text);
 }

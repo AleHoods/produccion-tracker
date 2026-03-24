@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+const MODELOS = ['N0', 'N1', 'N2', 'LL1', 'LL2', 'LL3', 'LL4']
+
 export default function FormularioInicio({ onIniciar, cargando }) {
   const [form, setForm] = useState({
     modelo: '',
@@ -35,19 +37,23 @@ export default function FormularioInicio({ onIniciar, cargando }) {
         <div className="form-row">
           <div className="field">
             <label>Modelo / Referencia</label>
-            <input
-              type="text"
-              placeholder="Ej: MOD-2024-A"
+            <select
               value={form.modelo}
               onChange={e => setForm(f => ({ ...f, modelo: e.target.value }))}
               required
-            />
+              className="select-modelo"
+            >
+              <option value="">Seleccioná un modelo...</option>
+              {MODELOS.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
           <div className="field">
-            <label>Operario</label>
+            <label>Líder</label>
             <input
               type="text"
-              placeholder="Nombre del operario"
+              placeholder="Nombre del líder"
               value={form.operario}
               onChange={e => setForm(f => ({ ...f, operario: e.target.value }))}
             />
