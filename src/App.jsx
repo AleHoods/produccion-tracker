@@ -7,7 +7,7 @@ export default function App() {
   const {
     sesion, registros, alertaActiva, alertasEnviadas,
     cargando, error,
-    iniciarSesion, registrarNuevaSecuencia, finalizarSesion,
+    iniciarSesion, registrarNuevaSecuencia, finalizarSesion, editarTamanoLote,
     metricas,
   } = useProduccion()
 
@@ -53,6 +53,7 @@ export default function App() {
             alertasEnviadas={alertasEnviadas}
             onRegistrar={registrarNuevaSecuencia}
             onFinalizar={finalizarSesion}
+            onEditarLote={editarTamanoLote}
             cargando={cargando}
           />
         ) : (

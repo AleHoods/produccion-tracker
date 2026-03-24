@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { UMBRALES } from '../lib/alertas'
 
-export default function Dashboard({ sesion, registros, metricas, alertaActiva, alertasEnviadas, onRegistrar, onFinalizar, cargando }) {
+export default function Dashboard({ sesion, registros, metricas, alertaActiva, alertasEnviadas, onRegistrar, onFinalizar, onEditarLote, cargando }) {
   const [secuenciaInput, setSecuenciaInput] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [ultimoRegistro, setUltimoRegistro] = useState(null)
+  const [editandoLote, setEditandoLote] = useState(false)
+  const [nuevoLote, setNuevoLote] = useState('')
 
   const handleRegistrar = async (e) => {
     e.preventDefault()
     const val = parseInt(secuenciaInput)
     if (isNaN(val)) return
-
     setEnviando(true)
     try {
       await onRegistrar(val, sesion.operario)
@@ -19,6 +20,15 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
     } finally {
       setEnviando(false)
     }
+  }
+
+  const handleEditarLote = async (e) => {
+    e.preventDefault()
+    const val = parseInt(nuevoLote)
+    if (isNaN(val) || val < 1) return
+    await onEditarLote(val)
+    setEditandoLote(false)
+    setNuevoLote('')
   }
 
   const colorAlerta = alertaActiva
@@ -47,8 +57,49 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
             <span className="seq-label">META</span>
             <span className="seq-val meta">{sesion.secuencia_meta.toLocaleString()}</span>
           </div>
+          <div className="seq-item">
+            <span className="seq-label">LOTE</span>
+            <span className="seq-val lote-val">
+              {sesion.cantidad_lote}
+              <button className="btn-editar-lote" onClick={() => { setEditandoLote(true); setNuevoLote(sesion.cantidad_lote) }} title="Editar tamaño del lote">✏️</button>
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Modal editar lote */}
+      {editandoLote && (
+        <div className="modal-overlay" onClick={() => setEditandoLote(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <h3>✏️ Editar tamaño del lote</h3>
+            <p className="modal-sub">Lote actual: <strong>{sesion.cantidad_lote} unidades</strong> — Meta actual: <strong>{sesion.secuencia_meta}</strong></p>
+            <form onSubmit={handleEditarLote} className="modal-form">
+              <div className="field">
+                <label>Nueva cantidad del lote</label>
+                <input
+                  type="number"
+                  value={nuevoLote}
+                  onChange={e => setNuevoLote(e.target.value)}
+                  min="1"
+                  required
+                  autoFocus
+                  className="input-secuencia"
+                />
+              </div>
+              {nuevoLote && !isNaN(parseInt(nuevoLote)) && (
+                <div className="modal-preview">
+                  <span>Nueva meta:</span>
+                  <strong>{(sesion.secuencia_inicio + parseInt(nuevoLote)).toLocaleString()}</strong>
+                </div>
+              )}
+              <div className="modal-botones">
+                <button type="button" className="btn-cancelar" onClick={() => setEditandoLote(false)}>Cancelar</button>
+                <button type="submit" className="btn-primary">Confirmar cambio</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Alerta activa */}
       {alertaActiva && (
@@ -97,11 +148,7 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
             <span className="progreso-pct">{metricas.porcentaje}%</span>
           </div>
           <div className="progreso-bar">
-            <div
-              className="progreso-fill"
-              style={{ width: `${metricas.porcentaje}%` }}
-            />
-            {/* Marcadores de alerta */}
+            <div className="progreso-fill" style={{ width: `${metricas.porcentaje}%` }} />
             {[30, 20, 10, 5].map(u => {
               const pct = Math.round(((sesion.cantidad_lote - u) / sesion.cantidad_lote) * 100)
               return (
@@ -138,7 +185,7 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
             value={secuenciaInput}
             onChange={e => setSecuenciaInput(e.target.value)}
             min={sesion.secuencia_inicio}
-            max={sesion.secuencia_meta + 10}
+            max={sesion.secuencia_meta + 100}
             required
             className="input-secuencia"
           />

@@ -718,3 +718,107 @@ input, button, select, textarea {
   background: var(--bg3);
   color: var(--text);
 }
+
+/* ── EDITAR LOTE ────────────────────────────────────────────────────────────── */
+.lote-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-editar-lote {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.5;
+  padding: 2px;
+  transition: opacity 0.2s, transform 0.2s;
+  line-height: 1;
+}
+
+.btn-editar-lote:hover { opacity: 1; transform: scale(1.2); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-card {
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius2);
+  padding: 28px;
+  width: 100%;
+  max-width: 420px;
+  margin: 20px;
+  box-shadow: 0 0 40px rgba(204,34,0,0.2);
+  animation: slideIn 0.2s ease;
+}
+
+.modal-card h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.modal-sub {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 20px;
+}
+
+.modal-sub strong { color: var(--text); }
+
+.modal-form { display: flex; flex-direction: column; gap: 16px; }
+
+.modal-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(204,34,0,0.08);
+  border: 1px solid rgba(204,34,0,0.25);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.modal-preview strong {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.modal-botones {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-cancelar {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  border-radius: var(--radius);
+  padding: 11px 20px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.btn-cancelar:hover { border-color: var(--text2); color: var(--text); }
