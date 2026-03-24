@@ -90,7 +90,7 @@ function buildMensaje({ sesion, faltantes, umbral, secuenciaActual }) {
   return `${umbral.emoji} <b>ALERTA CAMBIO DE MODELO</b>
 
 📋 <b>Modelo:</b> ${sesion.modelo}
-👤 <b>Operario:</b> ${sesion.operario || '—'}
+👤 <b>Líder:</b> ${sesion.operario || '—'}
 🔢 <b>Secuencia actual:</b> ${secuenciaActual}
 🎯 <b>Secuencia meta:</b> ${sesion.secuencia_meta}
 ⚠️ <b>Faltan:</b> ${faltantes} unidades
