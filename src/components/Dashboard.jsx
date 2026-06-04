@@ -40,7 +40,6 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
 
   return (
     <div className="dashboard">
-      {/* Header de sesión */}
       <div className={`sesion-header ${colorAlerta}`}>
         <div className="sesion-info">
           <div className="sesion-badge">EN PRODUCCIÓN</div>
@@ -67,7 +66,6 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
         </div>
       </div>
 
-      {/* Modal editar lote */}
       {editandoLote && (
         <div className="modal-overlay" onClick={() => setEditandoLote(false)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
@@ -76,15 +74,7 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
             <form onSubmit={handleEditarLote} className="modal-form">
               <div className="field">
                 <label>Nueva cantidad del lote</label>
-                <input
-                  type="number"
-                  value={nuevoLote}
-                  onChange={e => setNuevoLote(e.target.value)}
-                  min="1"
-                  required
-                  autoFocus
-                  className="input-secuencia"
-                />
+                <input type="number" value={nuevoLote} onChange={e => setNuevoLote(e.target.value)} min="1" required autoFocus className="input-secuencia" />
               </div>
               {nuevoLote && !isNaN(parseInt(nuevoLote)) && (
                 <div className="modal-preview">
@@ -101,7 +91,6 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
         </div>
       )}
 
-      {/* Alerta activa */}
       {alertaActiva && (
         <div className={`alerta-banner ${colorAlerta}`}>
           <span className="alerta-emoji">{alertaActiva.emoji}</span>
@@ -110,7 +99,6 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
         </div>
       )}
 
-      {/* Métricas principales */}
       {metricas && (
         <div className="metricas-grid">
           <div className="metrica-card">
@@ -140,7 +128,6 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
         </div>
       )}
 
-      {/* Barra de progreso */}
       {metricas && (
         <div className="progreso-container">
           <div className="progreso-labels">
@@ -152,19 +139,13 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
             {[30, 20, 10, 5].map(u => {
               const pct = Math.round(((sesion.cantidad_lote - u) / sesion.cantidad_lote) * 100)
               return (
-                <div
-                  key={u}
-                  className={`progreso-marker ${alertasEnviadas.includes(`alerta_${u}`) ? 'triggered' : ''}`}
-                  style={{ left: `${pct}%` }}
-                  title={`Alerta ${u} unidades`}
-                />
+                <div key={u} className={`progreso-marker ${alertasEnviadas.includes(`alerta_${u}`) ? 'triggered' : ''}`} style={{ left: `${pct}%` }} title={`Alerta ${u} unidades`} />
               )
             })}
           </div>
         </div>
       )}
 
-      {/* Umbrales */}
       <div className="umbrales-row">
         {UMBRALES.map(u => (
           <div key={u.nombre} className={`umbral-chip ${alertasEnviadas.includes(u.nombre) ? 'enviada' : 'pendiente'}`}>
@@ -175,41 +156,24 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
         ))}
       </div>
 
-      {/* Registro de secuencia */}
       <div className="registro-card">
         <h3>📥 Registrar secuencia actual</h3>
         <form onSubmit={handleRegistrar} className="registro-form">
-          <input
-            type="number"
-            placeholder="Ingresá la secuencia actual"
-            value={secuenciaInput}
-            onChange={e => setSecuenciaInput(e.target.value)}
-            min={sesion.secuencia_inicio}
-            max={sesion.secuencia_meta + 100}
-            required
-            className="input-secuencia"
-          />
+          <input type="number" placeholder="Ingresá la secuencia actual" value={secuenciaInput} onChange={e => setSecuenciaInput(e.target.value)} min={sesion.secuencia_inicio} max={sesion.secuencia_meta + 100} required className="input-secuencia" />
           <button type="submit" className="btn-registrar" disabled={enviando || cargando}>
             {enviando ? '⏳' : '✓ Registrar'}
           </button>
         </form>
         {ultimoRegistro && (
-          <div className="ultimo-registro">
-            ✅ Último registrado: <strong>{ultimoRegistro.toLocaleString()}</strong>
-          </div>
+          <div className="ultimo-registro">✅ Último registrado: <strong>{ultimoRegistro.toLocaleString()}</strong></div>
         )}
       </div>
 
-      {/* Historial de registros */}
       {registros.length > 0 && (
         <div className="historial-card">
           <h3>📋 Historial de registros</h3>
           <div className="historial-tabla">
-            <div className="hist-header">
-              <span>Hora</span>
-              <span>Secuencia</span>
-              <span>Producidas</span>
-            </div>
+            <div className="hist-header"><span>Hora</span><span>Secuencia</span><span>Producidas</span></div>
             {[...registros].reverse().map((r, i) => {
               const hora = new Date(r.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
               const producidas = r.secuencia_actual - sesion.secuencia_inicio
@@ -225,13 +189,7 @@ export default function Dashboard({ sesion, registros, metricas, alertaActiva, a
         </div>
       )}
 
-      {/* Botón finalizar */}
-      <button
-        className="btn-finalizar"
-        onClick={() => {
-          if (confirm('¿Confirmar cierre del lote actual?')) onFinalizar()
-        }}
-      >
+      <button className="btn-finalizar" onClick={() => { if (confirm('¿Confirmar cierre del lote actual?')) onFinalizar() }}>
         ⏹ Cerrar lote
       </button>
     </div>

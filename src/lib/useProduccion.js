@@ -3,9 +3,13 @@ import {
   crearSesion, obtenerSesionActiva, cerrarSesion,
   registrarSecuencia, obtenerRegistros,
   marcarAlertaEnviada, obtenerAlertasEnviadas,
-} from '../lib/supabase'
-import { evaluarAlertas, UMBRALES } from '../lib/alertas'
-import { supabase } from '../lib/supabase'
+  supabase
+} from './supabase'
+import { evaluarAlertas, UMBRALES } from './alertas'
+import {
+  obtenerFranjas, franjaActual, detectarTurno,
+  guardarHistoricoHora, guardarHistoricoDiario
+} from './dashboard'
 
 export function useProduccion() {
   const [sesion, setSesion] = useState(null)
@@ -14,9 +18,11 @@ export function useProduccion() {
   const [alertaActiva, setAlertaActiva] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
+  const [franjas, setFranjas] = useState([])
 
   useEffect(() => {
     cargarSesionActiva()
+    obtenerFranjas().then(setFranjas).catch(console.error)
   }, [])
 
   useEffect(() => {
@@ -34,7 +40,6 @@ export function useProduccion() {
         await cargarRegistros(s.id)
         const enviadas = await obtenerAlertasEnviadas(s.id)
         setAlertasEnviadas(enviadas)
-        calcularAlertaActiva(s, enviadas)
       }
     } catch (e) {
       setError(e.message)
@@ -47,18 +52,6 @@ export function useProduccion() {
     const regs = await obtenerRegistros(sesionId)
     setRegistros(regs)
     return regs
-  }
-
-  function calcularAlertaActiva(s, enviadas) {
-    const ultimo = registros[registros.length - 1]
-    if (!ultimo) return
-    const faltantes = s.secuencia_meta - ultimo.secuencia_actual
-    for (const u of [...UMBRALES].reverse()) {
-      if (faltantes <= u.faltantes && enviadas.includes(u.nombre)) {
-        setAlertaActiva(u)
-        return
-      }
-    }
   }
 
   const iniciarSesion = useCallback(async (datos) => {
@@ -86,6 +79,38 @@ export function useProduccion() {
       const nuevosRegistros = [...registros, reg]
       setRegistros(nuevosRegistros)
 
+      // Guardar histórico hora a hora
+      try {
+        const ahora = new Date()
+        const horaStr = ahora.toTimeString().slice(0, 5)
+        const fecha = ahora.toISOString().split('T')[0]
+        const franjasActuales = franjas.length > 0 ? franjas : await obtenerFranjas()
+        const franja = franjaActual(franjasActuales, horaStr)
+        if (franja) {
+          const turno = detectarTurno(franjasActuales, horaStr)
+          // Calcular producido en esta franja
+          const regsEnFranja = nuevosRegistros.filter(r => {
+            const h = new Date(r.created_at).toTimeString().slice(0, 5)
+            return h >= franja.hora_inicio.slice(0, 5) && h < franja.hora_fin.slice(0, 5)
+          })
+          const producidoFranja = regsEnFranja.length > 0
+            ? regsEnFranja[regsEnFranja.length - 1].secuencia_actual - (regsEnFranja[0].secuencia_actual - (registros.length > 0 ? registros[registros.length - 1].secuencia_actual - sesion.secuencia_inicio : 0))
+            : secuencia - sesion.secuencia_inicio
+          await guardarHistoricoHora({
+            fecha,
+            turno,
+            franja_inicio: franja.hora_inicio,
+            franja_fin: franja.hora_fin,
+            target: franja.target,
+            producido: secuencia - sesion.secuencia_inicio,
+            sesion_id: sesion.id
+          })
+        }
+      } catch (e) {
+        console.warn('Error guardando histórico hora:', e)
+      }
+
+      // Evaluar alertas
       const tipoAlerta = await evaluarAlertas({
         sesion,
         secuenciaActual: secuencia,
@@ -103,7 +128,7 @@ export function useProduccion() {
       setError(e.message)
       throw e
     }
-  }, [sesion, registros, alertasEnviadas])
+  }, [sesion, registros, alertasEnviadas, franjas])
 
   const editarTamanoLote = useCallback(async (nuevaCantidad) => {
     if (!sesion) return
@@ -118,7 +143,6 @@ export function useProduccion() {
         .single()
       if (error) throw error
       setSesion(data)
-      // Resetear alertas enviadas para que se recalculen con la nueva meta
       await supabase.from('alertas_enviadas').delete().eq('sesion_id', sesion.id)
       setAlertasEnviadas([])
       setAlertaActiva(null)
@@ -131,6 +155,32 @@ export function useProduccion() {
   const finalizarSesion = useCallback(async () => {
     if (!sesion) return
     try {
+      // Guardar histórico diario al cerrar
+      try {
+        const ahora = new Date()
+        const horaStr = ahora.toTimeString().slice(0, 5)
+        const fecha = ahora.toISOString().split('T')[0]
+        const franjasActuales = franjas.length > 0 ? franjas : await obtenerFranjas()
+        const turno = detectarTurno(franjasActuales, horaStr)
+        const totalTarget = franjasActuales
+          .filter(f => f.turno === turno)
+          .reduce((s, f) => s + f.target, 0)
+        const ultimoReg = registros[registros.length - 1]
+        const producido = ultimoReg
+          ? ultimoReg.secuencia_actual - sesion.secuencia_inicio
+          : 0
+        await guardarHistoricoDiario({
+          fecha,
+          turno,
+          modelo: sesion.modelo,
+          lider: sesion.operario,
+          target_total: totalTarget,
+          producido
+        })
+      } catch (e) {
+        console.warn('Error guardando histórico diario:', e)
+      }
+
       await cerrarSesion(sesion.id)
       setSesion(null)
       setRegistros([])
@@ -140,7 +190,7 @@ export function useProduccion() {
       setError(e.message)
       throw e
     }
-  }, [sesion])
+  }, [sesion, registros, franjas])
 
   const metricas = calcularMetricas(sesion, registros)
 
@@ -154,25 +204,22 @@ export function useProduccion() {
 
 function calcularMetricas(sesion, registros) {
   if (!sesion) return null
-
   const ultimo = registros[registros.length - 1]
   const secuenciaActual = ultimo?.secuencia_actual ?? sesion.secuencia_inicio
   const producidas = secuenciaActual - sesion.secuencia_inicio
   const faltantes = sesion.secuencia_meta - secuenciaActual
   const porcentaje = Math.min(100, Math.round((producidas / sesion.cantidad_lote) * 100))
-
   let velocidad = null
   let etaHoras = null
   if (registros.length >= 2) {
     const primero = registros[0]
-    const ultimo = registros[registros.length - 1]
-    const difMs = new Date(ultimo.created_at) - new Date(primero.created_at)
+    const ult = registros[registros.length - 1]
+    const difMs = new Date(ult.created_at) - new Date(primero.created_at)
     const difHoras = difMs / 1000 / 3600
     if (difHoras > 0) {
-      velocidad = Math.round((ultimo.secuencia_actual - primero.secuencia_actual) / difHoras)
+      velocidad = Math.round((ult.secuencia_actual - primero.secuencia_actual) / difHoras)
       etaHoras = velocidad > 0 ? (faltantes / velocidad).toFixed(1) : null
     }
   }
-
   return { secuenciaActual, producidas, faltantes, porcentaje, velocidad, etaHoras }
 }
